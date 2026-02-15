@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>⚡ GOD MODE ADMIN</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<!-- Icons & Fonts -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --bg: #050505; --card: #0F0F0F; --border: #27272a;
+        --text: #e4e4e7; --muted: #71717a;
+        --primary: #6366f1; --accent: #8b5cf6;
+        --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+    }
+    * { box-sizing: border-box; outline: none; }
+    body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 50px; }
+    
+    /* Layout */
+    .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+    .flex { display: flex; align-items: center; }
+    .between { justify-content: space-between; }
+    .gap-10 { gap: 10px; }
+    .col { flex-direction: column; }
+    .hidden { display: none !important; }
+
+    /* Header */
+    header { padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 25px; }
+    .brand { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 800; background: linear-gradient(to right, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1px; }
+
+    /* Stats Grid */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; }
+    .stat-card:hover { border-color: var(--c); transform: translateY(-3px); box-shadow: 0 10px 30px -10px var(--c); }
+    .stat-val { font-size: 24px; font-weight: 800; margin-top: 5px; display: block; }
+    .stat-lbl { font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 0.5px; }
+    .active-tab { background: rgba(255,255,255,0.05); border-color: var(--c); }
+
+    /* Main Content */
+    .grid-main { display: grid; grid-template-columns: 400px 1fr; gap: 25px; }
+    @media(max-width: 1000px){ .grid-main { grid-template-columns: 1fr; } }
+
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; height: fit-content; }
+    .panel h3 { margin: 0 0 15px 0; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+
+    /* Forms */
+    input, select { background: #18181b; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 10px; font-family: inherit; font-size: 13px; transition: 0.2s; }
+    input:focus { border-color: var(--primary); }
+    
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+    .btn:active { transform: scale(0.97); }
+    .btn-main { background: var(--primary); color: white; }
+    .btn-success { background: var(--success); color: #000; }
+    .btn-danger { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+    .btn-copy { padding: 4px 8px; font-size: 10px; background: #333; color: #fff; border-radius: 4px; margin-left: 5px; cursor: pointer; }
+
+    /* Request Items */
+    .req-card { background: #131313; border: 1px solid #333; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 3px solid var(--warning); animation: slideIn 0.3s; }
+    @keyframes slideIn { from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:translateY(0)} }
+    .utr-badge { font-family: monospace; background: rgba(245,158,11,0.1); color: var(--warning); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+
+    /* Agent List */
+    .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-height: 80vh; overflow-y: auto; padding-right: 5px; }
+    .agent-card { background: #131313; border: 1px solid var(--border); padding: 15px; border-radius: 12px; position: relative; }
+    .agent-card:hover { border-color: var(--primary); }
+    .badge { padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+    .b-on { background: rgba(16,185,129,0.15); color: var(--success); }
+    .b-off { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 99; display: none; justify-content: center; align-items: center; padding: 20px; }
+    .modal { background: var(--card); width: 100%; max-width: 450px; padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+    
+    .img-preview { width: 100px; height: 100px; object-fit: contain; background: white; border-radius: 8px; margin-top: 5px; display: none; }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+    <header class="flex between">
+        <div class="brand"><i class="fas fa-shield-cat"></i> ADMIN PRO</div>
+        <div class="flex gap-10" style="font-size:12px; color:var(--muted)">
+            <i class="fas fa-circle" style="color:var(--success); font-size:8px;"></i> System Online
+        </div>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card" onclick="filter('active')" id="tab-active" style="--c:var(--success)">
+            <span class="stat-lbl">Active Agents</span>
+            <span class="stat-val" style="color:var(--success)" id="s-act">0</span>
+        </div>
+        <div class="stat-card" onclick="filter('expired')" id="tab-expired" style="--c:var(--danger)">
+            <span class="stat-lbl">Expired / Off</span>
+            <span class="stat-val" style="color:var(--danger)" id="s-exp">0</span>
+        </div>
+        <div class="stat-card" onclick="filter('today')" id="tab-today" style="--c:var(--warning)">
+            <span class="stat-lbl">Added Today</span>
+            <span class="stat-val" style="color:var(--warning)" id="s-tod">0</span>
+        </div>
+        <div class="stat-card" style="--c:var(--primary); cursor:default">
+            <span class="stat-lbl">Total Revenue</span>
+            <span class="stat-val" id="s-rev">₹0</span>
+        </div>
+    </div>
+
+    <div class="grid-main">
+        
+        <!-- LEFT: Requests & Config -->
+        <div class="flex col gap-10">
+            <!-- Global Config -->
+            <div class="panel" style="width:100%">
+                <h3><i class="fas fa-cog"></i> Global Default Settings</h3>
+                <input id="g-paylink" placeholder="Default UPI Link (upi://pay?...)">
+                <input id="g-qr" placeholder="Default QR Image URL (https://...)" onchange="previewGlobal()">
+                <button class="btn btn-main" onclick="saveConfig()">Save Defaults</button>
+            </div>
+
+            <!-- Payment Requests -->
+            <div class="panel" style="width:100%; flex:1;">
+                <h3>
+                    <span><i class="fas fa-bell" style="color:var(--warning)"></i> Payment Requests</span>
+                    <span class="badge b-off" id="req-cnt">0</span>
+                </h3>
+                <div id="req-list" style="max-height:400px; overflow-y:auto;">
+                    <div style="text-align:center; padding:20px; color:var(--muted)">No Pending Requests</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Agent Management -->
+        <div class="panel">
+            <h3>
+                <span><i class="fas fa-users" style="color:var(--primary)"></i> Agent Database</span>
+                <button class="btn btn-danger" style="width:auto; padding:6px 12px;" onclick="bulkDelete()" id="btn-del-all">
+                    <i class="fas fa-trash"></i> Expired
+                </button>
+            </h3>
+
+            <!-- Create -->
+            <div style="background:#131313; padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:20px;">
+                <div class="flex gap-10">
+                    <input id="n-id" placeholder="Agent ID" style="font-weight:700">
+                    <input id="n-price" type="number" placeholder="₹ Price" style="width:80px">
+                </div>
+                <div class="flex gap-10">
+                    <select id="n-plan">
+                        <option value="120">2 Min Test</option>
+                        <option value="86400">1 Day</option>
+                        <option value="604800">7 Days</option>
+                        <option value="2592000">1 Month</option>
+                        <option value="31536000">1 Year</option>
+                    </select>
+                    <button class="btn btn-main" style="width:auto" onclick="addAgent()"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+
+            <!-- List -->
+            <input id="search" placeholder="Search ID..." oninput="renderAgents()">
+            <div id="agent-list" class="agent-grid"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <div class="flex between" style="margin-bottom:15px;">
+            <h3 style="margin:0">Edit Access</h3>
+            <button onclick="closeModal()" style="background:none; border:none; color:white; cursor:pointer"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <input type="hidden" id="e-id">
+        
+        <label class="stat-lbl">UPI Deep Link (For Pay Button)</label>
+        <input id="e-paylink" placeholder="upi://pay?pa=...">
+        
+        <label class="stat-lbl">QR Image URL (For Display)</label>
+        <div class="flex gap-10" style="align-items:flex-start">
+            <input id="e-qr" placeholder="https://imgur.com/..." oninput="previewQr()">
+            <img id="e-qr-prev" class="img-preview">
+        </div>
+
+        <label class="stat-lbl">Custom Message</label>
+        <input id="e-msg">
+
+        <label class="stat-lbl">Quick Actions</label>
+        <div class="flex gap-10" style="margin-bottom:15px">
+            <button class="btn btn-success" style="padding:8px" onclick="extend(1)">+1 D</button>
+            <button class="btn btn-success" style="padding:8px" onclick="extend(7)">+7 D</button>
+            <button class="btn btn-success" style="padding:8px" onclick="extend(30)">+30 D</button>
+        </div>
+
+        <div class="flex gap-10">
+            <button class="btn btn-main" onclick="saveEdit()">💾 Save Changes</button>
+            <button class="btn btn-danger" id="btn-toggle" onclick="toggleStatus()">Disable</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ⚠️ REPLACE WITH YOUR FIREBASE CONFIG
+    const firebaseConfig = { 
+        databaseURL: "https://my-project-funowner-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Globals
+    let agents = [];
+    let requests = [];
+    let currentFilter = 'all';
+    let currentEditId = null;
+    let defaultPay = "";
+    let defaultQr = "";
+
+    // Init
+    function init() {
+        // Load Defaults
+        db.ref("Config").on("value", s => {
+            const d = s.val() || {};
+            defaultPay = d.gateway || "";
+            defaultQr = d.qr_url || "";
+            document.getElementById("g-paylink").value = defaultPay;
+            document.getElementById("g-qr").value = defaultQr;
+        });
+
+        // Load Agents
+        db.ref("Agents").on("value", s => {
+            agents = [];
+            const d = s.val();
+            if(d) Object.keys(d).forEach(k => agents.push({id:k, ...d[k]}));
+            agents.sort((a,b) => b.createdAt - a.createdAt); // Newest first
+            updateStats();
+            renderAgents();
+        });
+
+        // Load Requests
+        db.ref("PaymentRequests").on("value", s => {
+            requests = [];
+            const d = s.val();
+            if(d) Object.keys(d).forEach(k => requests.push({key:k, ...d[k]}));
+            renderRequests();
+        });
+    }
+
+    // --- RENDERERS ---
+    function renderAgents() {
+        const q = document.getElementById("search").value.toLowerCase();
+        const list = document.getElementById("agent-list");
+        list.innerHTML = "";
+        const now = Date.now();
+
+        const filtered = agents.filter(a => {
+            if(!a.id.toLowerCase().includes(q)) return false;
+            if(currentFilter === 'active') return (a.enabled && a.endTime > now);
+            if(currentFilter === 'expired') return (!a.enabled || now > a.endTime);
+            if(currentFilter === 'today') return (a.createdAt > new Date().setHours(0,0,0,0));
+            return true;
+        });
+
+        filtered.forEach(a => {
+            const isExp = !a.enabled || now > a.endTime;
+            const diff = a.endTime - now;
+            const daysLeft = Math.ceil(diff / 86400000);
+            
+            const div = document.createElement("div");
+            div.className = "agent-card";
+            div.innerHTML = `
+                <div class="flex between" style="margin-bottom:8px">
+                    <span style="font-weight:700; font-size:15px">${a.id}</span>
+                    <span class="badge ${isExp?'b-off':'b-on'}">${isExp?'EXP':'ON'}</span>
+                </div>
+                <div style="font-size:12px; color:var(--muted); margin-bottom:10px">
+                    ${a.planName || 'Plan'} • ₹${a.price||0}<br>
+                    <span style="color:${isExp?'var(--danger)':'var(--success)'}">
+                        ${isExp ? 'Ended' : daysLeft + ' Days Left'}
+                    </span>
+                </div>
+                <div class="flex gap-10">
+                    <button class="btn btn-success" style="padding:6px" onclick="wa('${a.id}')"><i class="fab fa-whatsapp"></i></button>
+                    <button class="btn btn-main" style="padding:6px; background:#333" onclick="copy('${a.id}')"><i class="fas fa-copy"></i></button>
+                    <button class="btn btn-main" style="padding:6px" onclick="edit('${a.id}')"><i class="fas fa-cog"></i></button>
+                    <button class="btn btn-danger" style="padding:6px" onclick="del('${a.id}')"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+        if(!filtered.length) list.innerHTML = "<div style='color:var(--muted)'>No Agents Found</div>";
+    }
+
+    function renderRequests() {
+        const box = document.getElementById("req-list");
+        box.innerHTML = "";
+        document.getElementById("req-cnt").innerText = requests.length;
+
+        requests.forEach(r => {
+            const div = document.createElement("div");
+            div.className = "req-card";
+            div.innerHTML = `
+                <div class="flex between" style="margin-bottom:5px">
+                    <span style="font-weight:bold">${r.agentId}</span>
+                    <span style="color:var(--success)">₹${r.amount}</span>
+                </div>
+                <div style="font-size:12px; color:var(--muted); margin-bottom:8px">
+                    UTR: <span class="utr-badge" onclick="copy('${r.utr}')">${r.utr}</span>
+                </div>
+                <div class="flex gap-10">
+                    <button class="btn btn-success" style="padding:6px" onclick="approveReq('${r.key}','${r.agentId}')">Approve</button>
+                    <button class="btn btn-danger" style="padding:6px" onclick="rejectReq('${r.key}')">Reject</button>
+                </div>
+            `;
+            box.prepend(div);
+        });
+        if(!requests.length) box.innerHTML = "<div style='text-align:center; padding:20px; color:var(--muted)'>No Requests</div>";
+    }
+
+    // --- ACTIONS ---
+    function addAgent() {
+        const id = document.getElementById("n-id").value.trim().replace(/\./g,'_');
+        if(!id) return alert("Enter ID");
+        
+        const plan = document.getElementById("n-plan");
+        const dur = parseInt(plan.value);
+        const name = plan.options[plan.selectedIndex].text;
+        const price = document.getElementById("n-price").value;
+
+        db.ref("Agents/"+id).once("value", s => {
+            const now = Date.now();
+            let end = now + (dur*1000);
+            if(s.exists() && s.val().endTime > now) end = s.val().endTime + (dur*1000);
+
+            db.ref("Agents/"+id).update({
+                enabled: true,
+                endTime: end,
+                createdAt: s.exists() ? s.val().createdAt : now,
+                planName: name,
+                price: price,
+                paylink: defaultPay,  // Use Global Default
+                qr_url: defaultQr,    // Use Global Default
+                message: "Renew Now"
+            });
+            document.getElementById("n-id").value = "";
+        });
+    }
+
+    function approveReq(key, id) {
+        const days = prompt("Approve Payment for "+id+"?\nEnter Days to add:", "30");
+        if(!days) return;
+        
+        db.ref("Agents/"+id).once("value", s => {
+            const now = Date.now();
+            let base = (s.exists() && s.val().endTime > now) ? s.val().endTime : now;
+            let end = base + (parseInt(days) * 86400000);
+
+            db.ref("Agents/"+id).update({ enabled:true, endTime:end, message:"Access Granted" });
+            db.ref("PaymentRequests/"+key).remove();
+        });
+    }
+
+    function saveConfig() {
+        db.ref("Config").update({
+            gateway: document.getElementById("g-paylink").value,
+            qr_url: document.getElementById("g-qr").value
+        });
+        alert("Defaults Saved!");
+    }
+
+    // --- EDIT & MODAL ---
+    function edit(id) {
+        currentEditId = id;
+        const a = agents.find(x => x.id === id);
+        
+        document.getElementById("e-paylink").value = a.paylink || "";
+        document.getElementById("e-qr").value = a.qr_url || "";
+        document.getElementById("e-msg").value = a.message || "";
+        
+        const btn = document.getElementById("btn-toggle");
+        btn.innerText = a.enabled ? "🚫 Disable Access" : "✅ Enable Access";
+        btn.className = a.enabled ? "btn btn-danger" : "btn btn-success";
+
+        document.getElementById("modal").style.display = "flex";
+        previewQr();
+    }
+
+    function saveEdit() {
+        db.ref("Agents/"+currentEditId).update({
+            paylink: document.getElementById("e-paylink").value,
+            qr_url: document.getElementById("e-qr").value,
+            message: document.getElementById("e-msg").value
+        });
+        closeModal();
+    }
+
+    function extend(days) {
+        const a = agents.find(x => x.id === currentEditId);
+        const now = Date.now();
+        const base = (a.endTime > now) ? a.endTime : now;
+        db.ref("Agents/"+currentEditId).update({ enabled:true, endTime: base + (days*86400000) });
+        closeModal();
+    }
+
+    function toggleStatus() {
+        const a = agents.find(x => x.id === currentEditId);
+        db.ref("Agents/"+currentEditId).update({ enabled: !a.enabled });
+        closeModal();
+    }
+
+    function bulkDelete() {
+        if(!confirm("Delete ALL Expired?")) return;
+        const now = Date.now();
+        const updates = {};
+        agents.forEach(a => {
+            if(!a.enabled || now > a.endTime) updates[a.id] = null;
+        });
+        db.ref("Agents").update(updates);
+    }
+
+    // --- UTILS ---
+    function updateStats() {
+        const now = Date.now();
+        let act=0, exp=0, tod=0, rev=0;
+        agents.forEach(a => {
+            if(a.enabled && a.endTime > now) act++; else exp++;
+            if(a.createdAt > new Date().setHours(0,0,0,0)) tod++;
+            rev += parseInt(a.price||0);
+        });
+        document.getElementById("s-act").innerText = act;
+        document.getElementById("s-exp").innerText = exp;
+        document.getElementById("s-tod").innerText = tod;
+        document.getElementById("s-rev").innerText = "₹" + rev.toLocaleString();
+    }
+
+    function filter(type) {
+        currentFilter = type;
+        document.querySelectorAll('.stat-card').forEach(e => e.classList.remove('active-tab'));
+        if(type!=='all') document.getElementById('tab-'+type).classList.add('active-tab');
+        document.getElementById("btn-del-all").style.display = (type==='expired') ? 'block' : 'none';
+        renderAgents();
+    }
+
+    function previewQr() {
+        const u = document.getElementById("e-qr").value;
+        const i = document.getElementById("e-qr-prev");
+        if(u) { i.src = u; i.style.display="block"; } else { i.style.display="none"; }
+    }
+
+    function copy(t){ navigator.clipboard.writeText(t); }
+    function wa(id){ window.open("https://wa.me/?text=Hello "+id, "_blank"); }
+    function del(id){ if(confirm("Delete "+id+"?")) db.ref("Agents/"+id).remove(); }
+    function rejectReq(k){ if(confirm("Reject?")) db.ref("PaymentRequests/"+k).remove(); }
+    function closeModal(){ document.getElementById("modal").style.display = "none"; }
+    
+    init();
+</script>
+</body>
+</html>
